@@ -1,0 +1,61 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+.env
+# Python 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+
+# Python 缓存与编译文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 测试、覆盖率与类型检查缓存
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.pyre/
+.pytype/
+.ruff_cache/
+
+# 构建与打包产物
+dist/
+build/
+*.egg-info/
+*.whl
+
+# 环境变量与敏感配置
+.env
+.env.*
+!.env.example
+
+# miniclaw 本地工作区
+.miniclaw-workspace/
+
+# IDE 配置与编辑器临时文件
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 操作系统生成文件
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# 日志与临时文件
+*.log
+*.tmp
+*.temp
