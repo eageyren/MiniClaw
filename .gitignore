@@ -5,3 +5,10 @@ web/.next/
 web/tsconfig.tsbuildinfo
 api/**/__pycache__/
 evals/predictions.json
+.git/
+.idea/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+.venv/
+venv/
