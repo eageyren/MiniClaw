@@ -1,0 +1,71 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: miniclaw
+      POSTGRES_USER: miniclaw
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-miniclaw-local}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U miniclaw -d miniclaw"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgresql+psycopg://miniclaw:${POSTGRES_PASSWORD:-miniclaw-local}@db:5432/miniclaw
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      CHAT_MODEL: ${CHAT_MODEL:-gpt-4o-mini}
+      STT_PROVIDER: ${STT_PROVIDER:-openai_compatible}
+      STT_MODEL: ${STT_MODEL:-whisper-1}
+      TTS_PROVIDER: ${TTS_PROVIDER:-openai_compatible}
+      TTS_MODEL: ${TTS_MODEL:-gpt-4o-mini-tts}
+      TTS_VOICE: ${TTS_VOICE:-alloy}
+      CONTEXT_TOKEN_BUDGET: ${CONTEXT_TOKEN_BUDGET:-6000}
+      CONTEXT_KEEP_TURNS: ${CONTEXT_KEEP_TURNS:-8}
+      CONTEXT_SUMMARY_MAX_TOKENS: ${CONTEXT_SUMMARY_MAX_TOKENS:-1000}
+      CHECKPOINT_TTL_DAYS: ${CHECKPOINT_TTL_DAYS:-14}
+      APP_ENV: ${APP_ENV:-development}
+      LANGGRAPH_STRICT_MSGPACK: "true"
+      FAMILY_ID: ${FAMILY_ID:-local-family}
+      MEMBER_ID: ${MEMBER_ID:-local-elder}
+      FAMILY_TIMEZONE: ${FAMILY_TIMEZONE:-Asia/Shanghai}
+      FAMILY_ADMIN_NAME: ${FAMILY_ADMIN_NAME:-家属}
+      SMS_GATEWAY_URL: ${SMS_GATEWAY_URL:-}
+      SMS_GATEWAY_TOKEN: ${SMS_GATEWAY_TOKEN:-}
+      PUSH_VAPID_PUBLIC_KEY: ${PUSH_VAPID_PUBLIC_KEY:-}
+      PUSH_VAPID_PRIVATE_KEY: ${PUSH_VAPID_PRIVATE_KEY:-}
+      PUSH_VAPID_SUBJECT: ${PUSH_VAPID_SUBJECT:-mailto:admin@example.com}
+      COST_STT_PER_MINUTE_USD: ${COST_STT_PER_MINUTE_USD:-0}
+      COST_INPUT_PER_MILLION_TOKENS_USD: ${COST_INPUT_PER_MILLION_TOKENS_USD:-0}
+      COST_OUTPUT_PER_MILLION_TOKENS_USD: ${COST_OUTPUT_PER_MILLION_TOKENS_USD:-0}
+      COST_TTS_PER_MILLION_CHARACTERS_USD: ${COST_TTS_PER_MILLION_CHARACTERS_USD:-0}
+      MONTHLY_COST_LIMIT_USD: ${MONTHLY_COST_LIMIT_USD:-0}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports: ["127.0.0.1:8000:8000"]
+  scheduler:
+    build: ./api
+    command: ["python", "-m", "app.scheduler_worker"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://miniclaw:${POSTGRES_PASSWORD:-miniclaw-local}@db:5432/miniclaw
+      APP_ENV: ${APP_ENV:-development}
+      PUSH_VAPID_PUBLIC_KEY: ${PUSH_VAPID_PUBLIC_KEY:-}
+      PUSH_VAPID_PRIVATE_KEY: ${PUSH_VAPID_PRIVATE_KEY:-}
+      PUSH_VAPID_SUBJECT: ${PUSH_VAPID_SUBJECT:-mailto:admin@example.com}
+    depends_on:
+      db:
+        condition: service_healthy
+  web:
+    build: ./web
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_APP_ENV: ${APP_ENV:-development}
+    depends_on: [api]
+    ports: ["127.0.0.1:3000:3000"]
+volumes:
+  postgres_data:

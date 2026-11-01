@@ -1,0 +1,103 @@
+services:
+  db:
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql+psycopg://miniclaw:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/miniclaw
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?Set OPENAI_API_KEY in .env}
+      FAMILY_ID: ${FAMILY_ID:?Set FAMILY_ID in .env}
+      MEMBER_ID: ${MEMBER_ID:?Set MEMBER_ID in .env}
+      FAMILY_TIMEZONE: ${FAMILY_TIMEZONE:-Asia/Shanghai}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      CHAT_MODEL: ${CHAT_MODEL:-gpt-4o-mini}
+      STT_PROVIDER: ${STT_PROVIDER:-openai_compatible}
+      STT_MODEL: ${STT_MODEL:-whisper-1}
+      TTS_PROVIDER: ${TTS_PROVIDER:-openai_compatible}
+      TTS_MODEL: ${TTS_MODEL:-gpt-4o-mini-tts}
+      TTS_VOICE: ${TTS_VOICE:-alloy}
+      SMS_GATEWAY_URL: ${SMS_GATEWAY_URL:-}
+      SMS_GATEWAY_TOKEN: ${SMS_GATEWAY_TOKEN:-}
+      PUSH_VAPID_PUBLIC_KEY: ${PUSH_VAPID_PUBLIC_KEY:-}
+      PUSH_VAPID_PRIVATE_KEY: ${PUSH_VAPID_PRIVATE_KEY:-}
+      PUSH_VAPID_SUBJECT: ${PUSH_VAPID_SUBJECT:-mailto:admin@example.com}
+      COST_STT_PER_MINUTE_USD: ${COST_STT_PER_MINUTE_USD:-0}
+      COST_INPUT_PER_MILLION_TOKENS_USD: ${COST_INPUT_PER_MILLION_TOKENS_USD:-0}
+      COST_OUTPUT_PER_MILLION_TOKENS_USD: ${COST_OUTPUT_PER_MILLION_TOKENS_USD:-0}
+      COST_TTS_PER_MILLION_CHARACTERS_USD: ${COST_TTS_PER_MILLION_CHARACTERS_USD:-0}
+      MONTHLY_COST_LIMIT_USD: ${MONTHLY_COST_LIMIT_USD:-0}
+    ports: !reset []
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+
+  scheduler:
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://miniclaw:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/miniclaw
+      APP_ENV: production
+      PUSH_VAPID_PUBLIC_KEY: ${PUSH_VAPID_PUBLIC_KEY:-}
+      PUSH_VAPID_PRIVATE_KEY: ${PUSH_VAPID_PRIVATE_KEY:-}
+      PUSH_VAPID_SUBJECT: ${PUSH_VAPID_SUBJECT:-mailto:admin@example.com}
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.prod
+      args:
+        NEXT_PUBLIC_API_URL: https://${APP_DOMAIN:?Set APP_DOMAIN in .env}
+        NEXT_PUBLIC_FAMILY_PHONE: ${FAMILY_PHONE:?Set FAMILY_PHONE in .env}
+        NEXT_PUBLIC_APP_ENV: production
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: https://${APP_DOMAIN:?Set APP_DOMAIN in .env}
+      NEXT_PUBLIC_APP_ENV: production
+    ports: !reset []
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?Set APP_DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_started
+      api:
+        condition: service_healthy
+
+  backup:
+    image: postgres:16-alpine
+    user: "0:0"
+    restart: unless-stopped
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-24}
+      BACKUP_RETENTION_DAYS: "14"
+    volumes:
+      - ./ops:/ops:ro
+      - ./backups:/backups
+    entrypoint: ["sh", "/ops/backup-loop.sh"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,13 @@
+{
+  "name": "MiniClaw 陪伴",
+  "short_name": "MiniClaw",
+  "description": "家庭陪伴与提醒",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fbfdfb",
+  "theme_color": "#4b8058",
+  "icons": [
+    { "src": "/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

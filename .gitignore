@@ -1,0 +1,7 @@
+.env
+backups/
+web/node_modules/
+web/.next/
+web/tsconfig.tsbuildinfo
+api/**/__pycache__/
+evals/predictions.json

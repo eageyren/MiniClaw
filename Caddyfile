@@ -1,0 +1,18 @@
+{$APP_DOMAIN} {
+	encode zstd gzip
+	handle_errors {
+		@recover expression `{err.status_code} == 503 && {http.request.uri.path} == "/health"`
+		handle @recover {
+			rewrite * /offline.html?reason=recovery
+			reverse_proxy web:3000
+		}
+		@upstream_down expression `{err.status_code} == 502 || {err.status_code} == 504`
+		handle @upstream_down {
+			rewrite * /offline.html
+			reverse_proxy web:3000
+		}
+	}
+	@api path /api/* /health
+	reverse_proxy @api api:8000
+	reverse_proxy web:3000
+}

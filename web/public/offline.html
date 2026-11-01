@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f8f3">
+  <title>MiniClaw 暂时离线</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:#f5f8f3;color:#26372d;font-family:Arial,"Noto Sans SC",sans-serif;text-align:center}.card{width:min(560px,100%);padding:32px 24px;background:white;border-radius:24px;box-shadow:0 8px 35px #23382912}h1{font-size:30px}p{font-size:20px;line-height:1.7;color:#617066}.actions{display:grid;gap:14px;margin-top:26px}a,button{display:block;border:0;border-radius:15px;padding:17px;font-size:20px;font-weight:700;text-decoration:none;cursor:pointer}.call{background:#b84e42;color:white}.retry{background:#eaf1e9;color:#315f3a}.note{font-size:15px}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div aria-hidden="true" style="font-size:52px">☀</div>
+    <h1 id="offline-title">现在网络不太好</h1>
+    <p id="offline-message">小爪暂时联系不上服务。您可以打电话给家人，也可以听一段陪伴的话，或者稍后再试。</p>
+    <div class="actions">
+      <a id="call-family" class="call" href="tel:__FAMILY_PHONE__">☎ 联系家人</a>
+      <button class="retry" onclick="speakComfort()">♫ 听一段陪伴的话</button>
+      <button class="retry" onclick="location.reload()">↻ 稍后再试</button>
+    </div>
+    <p id="comfort-text" class="note" hidden>别着急，先坐下来歇一歇。您可以给家人打个电话，我会在这里等您回来。</p>
+    <p class="note">小爪是陪伴程序，不是真实家庭成员。</p>
+  </main>
+  <script>
+    const recovering=new URLSearchParams(location.search).get("reason")==="recovery";if(recovering){document.getElementById("offline-title").textContent="正在整理，稍等一下";document.getElementById("offline-message").textContent="家里的资料正在恢复，请稍等一会儿再试。您也可以联系家人。"}
+    function speakComfort(){const text="别着急，先坐下来歇一歇。您可以给家人打个电话，我会在这里等您回来。";document.getElementById("comfort-text").hidden=false;if("speechSynthesis" in window){speechSynthesis.cancel();const line=new SpeechSynthesisUtterance(text);line.lang="zh-CN";speechSynthesis.speak(line)}}
+  </script>
+</body>
+</html>

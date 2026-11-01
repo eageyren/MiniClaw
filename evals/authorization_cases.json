@@ -1,0 +1,22 @@
+[
+  {"id":"A01","scenario":"跨家庭读取会话","attacker_family":"family-a","target_family":"family-b","operation":"GET /api/conversations/target-id/messages","expected":"404，不返回内容"},
+  {"id":"A02","scenario":"跨家庭修改角色","attacker_family":"family-a","target_family":"family-b","operation":"PUT /api/family/roles/daughter","expected":"404，不修改数据"},
+  {"id":"A03","scenario":"跨家庭导出数据","attacker_family":"family-a","target_family":"family-b","operation":"GET /api/family/export","expected":"只导出令牌所属家庭"},
+  {"id":"A04","scenario":"撤销家属后继续读取","attacker":"revoked-family-account","operation":"GET /api/family/facts","expected":"401，不返回家庭数据"},
+  {"id":"A05","scenario":"撤销家属后使用旧刷新令牌","attacker":"revoked-family-account","operation":"POST /api/auth/refresh","expected":"401，不签发新令牌"},
+  {"id":"A06","scenario":"伪造随机 bearer token","attacker":"forged-token","operation":"GET /api/conversations","expected":"401"},
+  {"id":"A07","scenario":"家属读取长辈私人记忆","attacker_role":"family","operation":"GET /api/memories","expected":"404"},
+  {"id":"A08","scenario":"家属替长辈改提醒","attacker_role":"family","operation":"POST /api/reminders/deliveries/id/acknowledge","expected":"404"},
+  {"id":"A09","scenario":"长辈修改工具权限","attacker_role":"elder","operation":"PUT /api/access/tool-permissions","expected":"404"},
+  {"id":"A10","scenario":"长辈请求其他家庭的共享记忆","attacker_family":"family-a","target_family":"family-b","operation":"DELETE /api/family/memories/id","expected":"404，不影响目标家庭"},
+  {"id":"A11","scenario":"家属用他人家庭配对码绑定","attacker_phone":"unlinked-phone","operation":"POST /api/auth/family/pair","expected":"仅在有效 OTP 和有效配对码均匹配时绑定"},
+  {"id":"A12","scenario":"重复使用已消费配对码","attacker_phone":"second-account","operation":"POST /api/auth/family/pair","expected":"400 或 404，不创建第二个绑定"},
+  {"id":"A13","scenario":"配对码过期后尝试绑定","attacker_phone":"valid-phone","operation":"POST /api/auth/family/pair","expected":"拒绝绑定"},
+  {"id":"A14","scenario":"跨家庭确认提醒","attacker_family":"family-a","target_family":"family-b","operation":"POST /api/confirmations/id/decision","expected":"404，不执行提醒写入"},
+  {"id":"A15","scenario":"已解绑设备使用旧 access token","attacker":"revoked-device","operation":"GET /api/conversations","expected":"401"},
+  {"id":"A16","scenario":"已解绑设备使用长期 refresh token","attacker":"revoked-device","operation":"POST /api/auth/refresh","expected":"401"},
+  {"id":"A17","scenario":"家属读取其他家庭审计记录","attacker_family":"family-a","target_family":"family-b","operation":"GET /api/family/audit","expected":"只返回令牌所属家庭"},
+  {"id":"A18","scenario":"家属调整不属于本家庭的角色工具","attacker_family":"family-a","target_family":"family-b","operation":"PUT /api/access/tool-permissions","expected":"404，不变更目标家庭权限"},
+  {"id":"A19","scenario":"无 bearer token 访问受保护 API","attacker":"anonymous","operation":"GET /api/roles","expected":"401"},
+  {"id":"A20","scenario":"过期 access token 且刷新令牌无效","attacker":"expired-session","operation":"GET /api/family/roles","expected":"401，不返回数据"}
+]
